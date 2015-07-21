@@ -72,6 +72,33 @@ def mutateConfig(numNodes, configuration, numValues):
     indexToMutate = getRandomInt(0, numNodes - 1)
     newConf[indexToMutate] = getMutatedValue(newConf[indexToMutate], numValues)
     return [indexToMutate, newConf]
+
+""" Get node configurations that are 1 hamming distance from given node """
+def getNeighbours(numNodes, configuration, numValues):
+    listNeighbours = []
+    nextNode = 0
+    while (nextNode < numNodes):  
+        nextAllele = 0
+        while (nextAllele < numValues):
+            if (nextAllele != configuration[nextNode]):
+                nextNeighbour = list(configuration)
+                nextNeighbour[nextNode] = nextAllele
+                listNeighbours.append(nextNeighbour)
+            nextAllele += 1
+        nextNode += 1
+    return listNeighbours
+    
+def mutateConfigIncremental(nVal, kVal, kMap, aVal, nodeConfig, fitContribution, nodeFitness):
+    selectedConfig = nodeConfig
+    selectedFitness = nodeFitness
+    neighbours = getNeighbours(nVal, nodeConfig, aVal)
+    for adjConfig in neighbours:  
+        fitContribution = updateFitnessContributions(nVal, kVal, kMap, aVal, adjConfig, fitContribution)
+        systemFitness = getFitness(nVal, kMap, aVal, adjConfig, fitContribution)
+        if (systemFitness > selectedFitness):
+            selectedConfig = list(adjConfig)
+            selectedFitness = systemFitness
+    return [selectedConfig, selectedFitness, fitContribution]
     
 def dumpFitnessMap(nodeIndex, iMap): 
     for entry in iMap.keys():
@@ -79,7 +106,6 @@ def dumpFitnessMap(nodeIndex, iMap):
 
 def dumpAllFitnessMaps(aMap):
         for j in aMap.keys():
-            
             dumpFitnessMap(j, aMap[j])
 
         
@@ -92,48 +118,37 @@ def updateFitnessContributions(nVal, kVal, kMap, aVal, configuration, fitContrib
         nextNode += 1
     return fitContribution
 
-def simulateNK(nVal, kVal, aVal):
+def simulateNK(nVal, kVal, aVal, iterations):
     print("Simulating N:" + str(nVal) + " K:" + str(kVal))
     outerIterations = 0
-    outerTotalFitness = 0.0
-    globalMax = 0.0
     landscapeDist = []
-    while outerIterations < 10000: 
+    while outerIterations < iterations: 
         [nodeConfig, fitnessMap] = initAllNodes(nVal, kVal, aVal)
         adjList = getAdjacencyMatrix(nVal, kVal)
-        fitnessMap = updateFitnessContributions(nVal, kVal, adjList, aVal, nodeConfig, fitnessMap)
-        
+        fitnessMap = updateFitnessContributions(nVal, kVal, adjList, aVal, nodeConfig, fitnessMap)      
         systemFitness = getFitness(nVal, adjList, aVal, nodeConfig, fitnessMap)
-    
-        i = 0
-        localMax = systemFitness
-        while i < 50:
-            [mutatedIndex, mutatedNodeConfig] = mutateConfig(nVal, nodeConfig, aVal)
-            fitnessMap = updateFitnessContributions(nVal, kVal, adjList, aVal, mutatedNodeConfig, fitnessMap)
-            systemFitness = getFitness(nVal, adjList, aVal, mutatedNodeConfig, fitnessMap)
-            if systemFitness > localMax:
-                localMax = systemFitness
-                nodeConfig = mutatedNodeConfig
-            i += 1
-        outerTotalFitness += localMax
+        while 1:
+            [mutatedNodeConfig, mutatedFitness, fitnessMap] = mutateConfigIncremental(nVal, kVal, adjList, aVal, nodeConfig, fitnessMap, systemFitness)
+            if (mutatedNodeConfig == nodeConfig):
+                break
+            nodeConfig = mutatedNodeConfig
+            systemFitness = mutatedFitness    
         outerIterations += 1
-        if globalMax < localMax:
-            globalMax = localMax
-        landscapeDist.append(localMax)
-        mu = round(numpy.mean(landscapeDist),2)
-        sd = round(numpy.std(landscapeDist),2)
+        landscapeDist.append(systemFitness)
+    mu = numpy.mean(landscapeDist)
+    sd = numpy.std(landscapeDist)
     return [mu,sd]
 
 a = A_GLOBAL
-nList = [8, 16, 24, 48, 96]
+#nList = [8, 16, 24, 48, 96]
 kList = [0, 2, 4, 8, 16, 24, 48, 96]
-#nList = [8]
-#kList = [0]
+nList = [8, 16, 24]
+#kList = [2]
 for nVal in nList:
     for kVal in kList:
         if kVal <= nVal:
             if kVal == nVal:
-                [nmu, nsd] = simulateNK(nVal, kVal-1, a)
+                [nmu, nsd] = simulateNK(nVal, kVal-1, a, 100)
             else:
-                [nmu, nsd] = simulateNK(nVal, kVal, a)
+                [nmu, nsd] = simulateNK(nVal, kVal, a, 100)
             print("N = " + str(nVal) + " K = " + str(kVal) + " Mean :" + str(nmu) + " SD: " + str(nsd))
