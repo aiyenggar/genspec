@@ -35,12 +35,15 @@ class NK:
             self.__fitnessDict[nodeIndex][hashKey] = sim.getRandom()
         return self.__fitnessDict[nodeIndex][hashKey]
         
-    def refreshFitnessContributions(self, configuration):
+    def refreshFitnessContributions(self, newConfig, prevConfig=None):
+        if prevConfig != None:
+            # Find nodes that have changed between prevConfig and newConfig
+            pass
         maxConfig = self.__inputs.aValue() ** (self.__inputs.kValue() + 1)
         nextNode = 0
         while nextNode < self.__inputs.nValue():
             if len(self.__fitnessDict[nextNode]) < maxConfig:
-                self.updateNodeContribution(nextNode, configuration)
+                self.updateNodeContribution(nextNode, newConfig)
             nextNode += 1
 
     def getFitness(self, configuration):
@@ -71,7 +74,7 @@ class NK:
             neighbours = self.getNeighbours(nodeConfig)
             for adjConfig in neighbours:
                 self.__attemptedFlips += 1
-                self.refreshFitnessContributions(adjConfig)
+                self.refreshFitnessContributions(adjConfig, nodeConfig)
                 systemFitness = self.getFitness(adjConfig)
                 if (systemFitness > selectedFitness):
                     self.__acceptedFlips += 1
@@ -90,7 +93,7 @@ class NK:
                 randomConfig = list(nodeConfig)
                 randomConfig[randomNode] = randomAllele
                 self.__attemptedFlips += 1
-                self.refreshFitnessContributions(randomConfig)
+                self.refreshFitnessContributions(randomConfig, nodeConfig)
                 systemFitness = self.getFitness(randomConfig)
                 hashKey = tuple(randomConfig)
                 if hashKey not in exploredNeighbours:
