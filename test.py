@@ -10,21 +10,26 @@ from nk import sim, model
 kList = [0, 2, 4, 8, 16, 24]
 #nList = [8, 16, 24, 48, 96]
 nList = [8, 16, 24]
-expResults = []
+landscapes = 100
+results = []
 for nVal in nList:
     for kVal in kList:
         if kVal <= nVal:
             if kVal == nVal:
-                test = sim.sim(nVal, kVal-1)
+                input = sim.SimInput(nVal, kVal-1)
             else:
-                test = sim.sim(nVal, kVal)
-            test.generateAdjMatrix()
-            myModel = model.model(test)
-            distri = myModel.runSimulation()
-            test.setFinessDistribution(distri)
-            print("N = " + str(test.nValue()) + " K = " + str(test.kValue()) + 
-                    " Mean = " + str(round(test.meanFitness(),2)) + 
-                    " SD = " + str(round(test.stddevFitness(), 2)))
-            expResults.append(test)
-            test = None
-            myModel = None
+                input = sim.SimInput(nVal, kVal)
+            input.generateAdjMatrix()
+            simulation = model.NK(input)
+            output = simulation.runSimulation(landscapes)
+            print("N=" + str(input.nValue()) + 
+                    " K=" + str(input.kValue()) + " " +
+                    str(round(output.meanFitness(),2)) + 
+                    " (" + str(round(output.stddevFitness(), 2)) + ")" +
+                    " " + str(round(output.meanAttemptedFlips(),2)) + 
+                    " " + str(round(output.meanAcceptedFlips(),2))
+                 )
+            results.append([input, output])
+            input = None
+            simulation = None
+            output = None
