@@ -34,7 +34,7 @@ def mutateConfigIncremental(nVal, kVal, kMap, aVal, nodeConfig, fitContribution,
         if (systemFitness > selectedFitness):
             selectedConfig = list(adjConfig)
             selectedFitness = systemFitness
-    return [selectedConfig, selectedFitness, fitContribution]
+    return [selectedConfig, selectedFitness]
 
 
 """ Get node configurations that are 1 hamming distance from given node """
@@ -82,8 +82,7 @@ class model:
         
     def runSimulation(self):
         cur = self.__simObject
-        print("Simulating N:" + str(cur.nValue()) + 
-                " K:" + str(cur.kValue()))
+#        print("Simulating N:" + str(cur.nValue()) + " K:" + str(cur.kValue()))
         outerIterations = 0
         landscapeDist = []
         while outerIterations < cur.landscapes(): 
@@ -105,7 +104,8 @@ class model:
                                        self.__fitnessDict
                                        )
             while 1:
-                [mutatedNodeConfig, mutatedFitness, self.__fitnessDict] = mutateConfigIncremental(cur.nValue(),
+                prevNodeConfig = list(self.__nodeConfig)
+                [mutatedNodeConfig, mutatedFitness] = mutateConfigIncremental(cur.nValue(),
                                                                             cur.kValue(),
                                                                             cur.adjMatrix(),
                                                                             cur.aValue(),
@@ -113,10 +113,10 @@ class model:
                                                                             self.__fitnessDict,
                                                                             systemFitness
                                                                             )
-                if (mutatedNodeConfig == self.__nodeConfig):
+                if (mutatedNodeConfig == prevNodeConfig):
                     break
-                self.__nodeConfig = mutatedNodeConfig
+                self.__nodeConfig = list(mutatedNodeConfig)
                 systemFitness = mutatedFitness    
             outerIterations += 1
             landscapeDist.append(systemFitness)
-            return landscapeDist
+        return landscapeDist
