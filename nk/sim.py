@@ -3,73 +3,74 @@
 Created on Wed Jul 22 05:50:00 2015
 
 @author: aiyenggar
-The sim class encapsulates the inputs and outputs of a simulation 
+The sim class encapsulates the inputs and outputs of a simulation
 """
 
 from enum import Enum
 import random
 import numpy
- 
+
 def getRandom():
-        return random.random()
+    """ Return an Random Number between 0 and 1 """
+    return random.random()
 
 def getRandomInt(start, end):
-        return random.randint(start, end)
-    
+    return random.randint(start, end)
+
 class KDistribution(Enum):
     FIXED = 1
     NORMAL = 2
 
 class SearchMethod(Enum):
-    GREEDY = 1
-    STEEPEST_NEIGHBOUR = 2
-    
+    GREEDY = 1 # TODO: Change to the formal term
+    STEEPEST = 2 # TODO: Change to the formal term
+
 A_DEFAULT = 2
 
 class SimInput:
     def __init__(self, n, k, a=A_DEFAULT):
-        # Check that n is positive, k is positive and less than n        
+        # Check that n is positive, k is positive and less than n
         self.__nVal = n
         self.__kVal = k
         self.__aVal = a
         self.__kSystem = KDistribution.FIXED
         self.__adjMatrix = None
-        self.__searchMethod = SearchMethod.STEEPEST_NEIGHBOUR
-    
+        self.__searchMethod = SearchMethod.STEEPEST
+
     def __del__(self):
         pass
-    
+
     def setKSystem(self, kSys):
         self.__kSystem = kSys
-    
+
     def setSearchMethod(self, method):
         self.__searchMethod = method
-        
+
     def nValue(self):
         return self.__nVal
-    
+
     def kValue(self):
         return self.__kVal
-        
+
     def aValue(self):
         return self.__aVal
 
     def adjMatrix(self):
         return self.__adjMatrix
-    
+
     def searchMethod(self):
         return self.__searchMethod
-        
+
     def generateAdjMatrix(self, kSys=None):
         if (self.__nVal <= self.__kVal):
             return None
-            
+
         if (kSys == None):
             kSys = self.__kSystem
         else:
             #Perform a check to ensure kSys is valid
             self.__kSystem = kSys
-            
+
         if (self.__kSystem == KDistribution.FIXED):
             self.__adjMatrix = list([])
             for nodeIndex in range(0, self.__nVal):
@@ -103,45 +104,45 @@ class SimOutput:
         self.__acceptedFlips = None
     def __del__(self):
         pass
-           
+
     def setLandscapes(self, lScapes):
         self.__landscapes = lScapes
-        
+
     def setFinessDistribution(self, distribution):
         self.__fitnessDistribution = distribution
- 
+
     def setAttemptedFlipsDistribution(self, distribution):
         self.__attemptedFlips = distribution
-        
+
     def setAcceptedFlipsDistribution(self, distribution):
         self.__acceptedFlips = distribution
-    
+
     def landscapes(self):
         return self.__landscapes
-    
+
     def meanFitness(self):
         return numpy.mean(self.__fitnessDistribution)
-        
+
     def stddevFitness(self):
         return numpy.std(self.__fitnessDistribution)
 
     def meanAttemptedFlips(self):
         return numpy.mean(self.__attemptedFlips)
-        
+
     def stddevAttemptedFlips(self):
         return numpy.std(self.__attemptedFlips)
-        
+
     def meanAcceptedFlips(self):
         return numpy.mean(self.__acceptedFlips)
-        
+
     def stddevAcceptedFlips(self):
-        return numpy.std(self.__acceptedFlips)      
-    
+        return numpy.std(self.__acceptedFlips)
+
     def lenFitnessDistribution(self):
         return len(self.__fitnessDistribution)
 
     def lenAttemptedFlips(self):
         return len(self.__attemptedFlips)
-    
+
     def lenAcceptedFlips(self):
         return len(self.__acceptedFlips)

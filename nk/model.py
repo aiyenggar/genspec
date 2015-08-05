@@ -4,6 +4,7 @@ Created on Wed Jul 22 05:37:01 2015
 
 @author: aiyenggar
 """
+import logging
 from nk import sim
 
 class NK:
@@ -11,18 +12,38 @@ class NK:
         self.__inputs = simInput
         self.__nodeConfig = None
         self.__fitnessDict = None
-    
+        self.logger =  logging.getLogger(__name__)
+
     def setup(self):
         self.__nodeConfig = list([])
         self.__fitnessDict = dict({})
         self.__attemptedFlips = 0
         self.__acceptedFlips = 0
         for index in range(0, self.__inputs.nValue()):
-            nextNodeValue = sim.getRandomInt(0,self.__inputs.aValue()-1)
+            nextNodeValue = sim.getRandomInt(0, self.__inputs.aValue()-1)
             self.__nodeConfig.append(nextNodeValue)
             self.__fitnessDict[index] = dict({})
 
+
     def updateNodeContribution(self, nodeIndex, configuration):
+        """
+        Given the the node index and new node configuration,
+        update the node fitness contributions
+
+        Parameters
+        ----------
+        nodeIndex   : number
+                    index of the node whose fitness contribution has changed
+        configuration: list
+                    current node configuration
+
+        Returns
+        -------
+        None
+
+        Example
+        -------
+        """
         maskedConfig = list(configuration)
         hashKey = ()
         colValue = 0
@@ -34,7 +55,7 @@ class NK:
         if hashKey not in self.__fitnessDict[nodeIndex]:
             self.__fitnessDict[nodeIndex][hashKey] = sim.getRandom()
         return self.__fitnessDict[nodeIndex][hashKey]
-        
+
     def refreshFitnessContributions(self, newConfig, prevConfig=None):
         if prevConfig != None:
             # Find nodes that have changed between prevConfig and newConfig
@@ -51,12 +72,12 @@ class NK:
         for index in range(0, self.__inputs.nValue()):
             runningFitnessSum += self.updateNodeContribution(index, configuration)
         return runningFitnessSum/self.__inputs.nValue()
-        
+
     """ Get node configurations that are 1 hamming distance from given node """
     def getNeighbours(self, configuration):
         listNeighbours = []
         nextNode = 0
-        while (nextNode < self.__inputs.nValue()):  
+        while (nextNode < self.__inputs.nValue()):
             nextAllele = 0
             while (nextAllele < self.__inputs.aValue()):
                 if (nextAllele != configuration[nextNode]):
@@ -66,11 +87,11 @@ class NK:
                 nextAllele += 1
             nextNode += 1
         return listNeighbours
-    
+
     def mutate(self, nodeConfig, nodeFitness):
         selectedConfig = nodeConfig
         selectedFitness = nodeFitness
-        if (self.__inputs.searchMethod() == sim.SearchMethod.STEEPEST_NEIGHBOUR):
+        if (self.__inputs.searchMethod() == sim.SearchMethod.STEEPEST):
             neighbours = self.getNeighbours(nodeConfig)
             for adjConfig in neighbours:
                 self.__attemptedFlips += 1
@@ -99,12 +120,12 @@ class NK:
                 if hashKey not in exploredNeighbours:
                     exploredNeighbours[hashKey] = 1
                 else:
-                    exploredNeighbours[hashKey] += 1                 
+                    exploredNeighbours[hashKey] += 1
                 if (systemFitness > selectedFitness):
                     self.__acceptedFlips += 1
                     selectedConfig = list(randomConfig)
                     selectedFitness = systemFitness
-                    return [selectedConfig, selectedFitness]  
+                    return [selectedConfig, selectedFitness]
             return [selectedConfig, selectedFitness]
         else:
             return None
@@ -117,20 +138,20 @@ class NK:
         fitnessDistribution = []
         attemptedFlipsDist = []
         acceptedFlipsDist = []
-        while outerIterations < countLandscapes: 
+        while outerIterations < countLandscapes:
+            self.logger.debug("Starting " + str(outerIterations) + " Landscape")
             self.setup()
             self.refreshFitnessContributions(self.__nodeConfig)
             systemFitness = self.getFitness(self.__nodeConfig)
             while 1:
                 prevNodeConfig = list(self.__nodeConfig)
-                [mutatedConfig, mutatedFitness] = self.mutate(
-                                                    self.__nodeConfig, 
+                [mutatedConfig, mutatedFitness] = self.mutate(self.__nodeConfig,
                                                     systemFitness
                                                     )
                 if (mutatedConfig == prevNodeConfig):
                     break
                 self.__nodeConfig = list(mutatedConfig)
-                systemFitness = mutatedFitness    
+                systemFitness = mutatedFitness
             outerIterations += 1
             fitnessDistribution.append(systemFitness)
             attemptedFlipsDist.append(self.__attemptedFlips)
@@ -139,5 +160,5 @@ class NK:
         outputs.setAttemptedFlipsDistribution(attemptedFlipsDist)
         outputs.setAcceptedFlipsDistribution(acceptedFlipsDist)
         return outputs
-        
+
 """ End of Class NK """
