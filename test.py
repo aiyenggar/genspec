@@ -34,9 +34,9 @@ def logLine():
 from nk import sim, model
 setup_logging();
 #kList = [0, 2, 4, 8, 16, 24, 48, 96]
-kList = [8]
+kList = [0, 2, 4, 8, 16]
 #nList = [8, 16, 24, 48, 96]
-nList = [8]
+nList = [2, 4, 8, 16]
 landscapes = 100
 results = []
 logger =  logging.getLogger(__name__)
@@ -59,10 +59,12 @@ for nVal in nList:
                 logger.info(row)
             simulation = model.NK(input)
             output = simulation.runSimulation(landscapes)
+            logger.log(OUTPUT_LOG_LEVEL, time.strftime("%Y-%m-%d %H:%M:%S") + " Simulation Results: N = " + str(input.nValue()) + " K = " + str(input.kValue())
+                    + " Search Method: " + input.searchMethodString() + " Landscapes = " + str(landscapes))
             logger.log(OUTPUT_LOG_LEVEL,
                     "N=" + str(input.nValue()) +
                     " K=" + str(input.kValue()) + " " +
-                    str(round(output.meanFitness(),2)) +
+                    str(round(output.meanFitness(),4)) +
                     " (" + str(round(output.stddevFitness(), 2)) + ")" +
                     " " + str(round(output.meanAttemptedFlips(),2)) +
                     " " + str(round(output.meanAcceptedFlips(),2))
@@ -71,6 +73,4 @@ for nVal in nList:
             input = None
             simulation = None
             output = None
-        else:
-            logger.warning("K = " + str(input.kValue()) + " is greater than N = " + str(input.nValue()))
         logLine()
