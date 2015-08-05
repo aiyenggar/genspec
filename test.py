@@ -7,13 +7,13 @@ Created on Wed Jul 22 06:00:03 2015
 import os
 import json
 import logging.config
+import time
 
 OUTPUT_LOG_LEVEL = 25
 def setup_logging(
     default_path='logging.json',
     default_level=logging.ERROR,
-    env_key='LOG_CFG'
-):
+    env_key='LOG_CFG'):
     """Setup logging configuration
 
     """
@@ -28,10 +28,13 @@ def setup_logging(
     else:
         logging.basicConfig(level=default_level)
 
+def logLine():
+    logger.info("---------------------------------------------")
+
 from nk import sim, model
 setup_logging();
 #kList = [0, 2, 4, 8, 16, 24, 48, 96]
-kList = [0]
+kList = [8]
 #nList = [8, 16, 24, 48, 96]
 nList = [8]
 landscapes = 100
@@ -39,13 +42,21 @@ results = []
 logger =  logging.getLogger(__name__)
 for nVal in nList:
     for kVal in kList:
-        logger.debug("Starting Simulation: N = " + str(nVal) + " K = " + str(kVal))
         if kVal <= nVal:
             if kVal == nVal:
                 input = sim.SimInput(nVal, kVal-1)
             else:
                 input = sim.SimInput(nVal, kVal)
+            input.setSearchMethod(sim.SearchMethod.GREEDY)
             input.generateAdjMatrix()
+            logger.info(time.strftime("%Y-%m-%d %H:%M:%S") + " Simulating: N = " + str(input.nValue()) + " K = " + str(input.kValue()))
+            logger.info("Search Method: " + input.searchMethodString() + " Landscapes = " + str(landscapes))
+            # Find a Way to log.info the adjacency matrix
+            logger.info("Adjacency Matrix")
+            logLine()
+            adjMatrix = input.adjMatrix()
+            for row in adjMatrix:
+                logger.info(row)
             simulation = model.NK(input)
             output = simulation.runSimulation(landscapes)
             logger.log(OUTPUT_LOG_LEVEL,
@@ -61,5 +72,5 @@ for nVal in nList:
             simulation = None
             output = None
         else:
-            logger.warning("K value is greater than N")
-    logger.info("All K's Exhausted for N = " + str(nVal))
+            logger.warning("K = " + str(input.kValue()) + " is greater than N = " + str(input.nValue()))
+        logLine()

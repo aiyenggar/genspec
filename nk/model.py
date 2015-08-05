@@ -7,6 +7,14 @@ Created on Wed Jul 22 05:37:01 2015
 import logging
 from nk import sim
 
+ROUND = 4
+
+def listString(configuration):
+    pString = ""
+    for element in configuration:
+        pString += str(element)
+    return pString
+
 class NK:
     def __init__(self, simInput):
         self.__inputs = simInput
@@ -24,6 +32,21 @@ class NK:
             self.__nodeConfig.append(nextNodeValue)
             self.__fitnessDict[index] = dict({})
 
+
+    def getMaskedConfig(self, nodeIndex, configuration):
+        """
+        Given the node index and node configuration return
+        a tuple that is the masked configuration
+        """
+        maskedConfig = list(configuration)
+        hashKey = ()
+        colValue = 0
+        for kValue in self.__inputs.adjMatrix()[nodeIndex]:
+            if kValue == 0:
+                maskedConfig[colValue] = self.__inputs.aValue()
+            colValue += 1
+        hashKey = tuple(maskedConfig)
+        return hashKey
 
     def updateNodeContribution(self, nodeIndex, configuration):
         """
@@ -44,14 +67,8 @@ class NK:
         Example
         -------
         """
-        maskedConfig = list(configuration)
-        hashKey = ()
-        colValue = 0
-        for kValue in self.__inputs.adjMatrix()[nodeIndex]:
-            if kValue == 0:
-                maskedConfig[colValue] = self.__inputs.aValue()
-            colValue += 1
-        hashKey = tuple(maskedConfig)
+
+        hashKey = self.getMaskedConfig(nodeIndex, configuration)
         if hashKey not in self.__fitnessDict[nodeIndex]:
             self.__fitnessDict[nodeIndex][hashKey] = sim.getRandom()
         return self.__fitnessDict[nodeIndex][hashKey]
@@ -88,6 +105,21 @@ class NK:
             nextNode += 1
         return listNeighbours
 
+    def nodeContriString(self, configuration):
+        pString = ""
+        for index in range(0, self.__inputs.nValue()):
+            hashKey = self.getMaskedConfig(index, configuration)
+            pString += str(round(self.__fitnessDict[index][hashKey], ROUND))
+            if index != (self.__inputs.nValue() - 1):
+                pString += ", "
+        return pString
+
+    def logState(self, configuration, fitness, leadingString=""):
+        pString = leadingString + listString(configuration) + " | "
+        pString += self.nodeContriString(configuration) + " | "
+        pString += str(round(fitness, ROUND))
+        self.logger.info(pString)
+
     def mutate(self, nodeConfig, nodeFitness):
         selectedConfig = nodeConfig
         selectedFitness = nodeFitness
@@ -97,6 +129,7 @@ class NK:
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(adjConfig, nodeConfig)
                 systemFitness = self.getFitness(adjConfig)
+                self.logState(adjConfig, systemFitness, "\t")
                 if (systemFitness > selectedFitness):
                     self.__acceptedFlips += 1
                     selectedConfig = list(adjConfig)
@@ -116,6 +149,7 @@ class NK:
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(randomConfig, nodeConfig)
                 systemFitness = self.getFitness(randomConfig)
+                self.logState(randomConfig, systemFitness, "\t")
                 hashKey = tuple(randomConfig)
                 if hashKey not in exploredNeighbours:
                     exploredNeighbours[hashKey] = 1
@@ -139,23 +173,26 @@ class NK:
         attemptedFlipsDist = []
         acceptedFlipsDist = []
         while outerIterations < countLandscapes:
-            self.logger.debug("Starting " + str(outerIterations) + " Landscape")
+            self.logger.info("Begin Searching Landscape #: " + str(outerIterations))
             self.setup()
             self.refreshFitnessContributions(self.__nodeConfig)
             systemFitness = self.getFitness(self.__nodeConfig)
+            self.logState(self.__nodeConfig, systemFitness)
             while 1:
                 prevNodeConfig = list(self.__nodeConfig)
                 [mutatedConfig, mutatedFitness] = self.mutate(self.__nodeConfig,
                                                     systemFitness
                                                     )
+                self.logState(mutatedConfig, mutatedFitness)
                 if (mutatedConfig == prevNodeConfig):
                     break
                 self.__nodeConfig = list(mutatedConfig)
                 systemFitness = mutatedFitness
-            outerIterations += 1
             fitnessDistribution.append(systemFitness)
             attemptedFlipsDist.append(self.__attemptedFlips)
             acceptedFlipsDist.append(self.__acceptedFlips)
+            self.logger.info("End Searching Landscape #: " + str(outerIterations))
+            outerIterations += 1
         outputs.setFinessDistribution(fitnessDistribution)
         outputs.setAttemptedFlipsDistribution(attemptedFlipsDist)
         outputs.setAcceptedFlipsDistribution(acceptedFlipsDist)

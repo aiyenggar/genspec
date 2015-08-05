@@ -61,6 +61,13 @@ class SimInput:
     def searchMethod(self):
         return self.__searchMethod
 
+    def searchMethodString(self):
+        if self.__searchMethod == SearchMethod.STEEPEST:
+            return "STEEPEST"
+        if self.__searchMethod == SearchMethod.GREEDY:
+            return "GREEDY"
+        return None
+
     def generateAdjMatrix(self, kSys=None):
         if (self.__nVal <= self.__kVal):
             return None
