@@ -34,7 +34,7 @@ def logLine():
 from nk import sim, model
 setup_logging();
 #kList = [0, 2, 4, 8, 16, 24, 48, 96]
-kList = [2, 4, 8, 16, 24]
+kList = [0, 2, 4, 8, 16, 24]
 #nList = [8, 16, 24, 48, 96]
 nList = [8, 16, 24]
 landscapes = 100

@@ -36,7 +36,7 @@ class SimInput:
         self.__kSystem = KDistribution.FIXED
         self.__adjMatrix = None
         self.__searchMethod = SearchMethod.STEEPEST
-
+        self.__mutateDistance = 2
     def __del__(self):
         pass
 
@@ -67,6 +67,9 @@ class SimInput:
         if self.__searchMethod == SearchMethod.GREEDY:
             return "GREEDY"
         return None
+
+    def mutateDistance(self):
+        return self.__mutateDistance
 
     def generateAdjMatrix(self, kSys=None):
         if (self.__nVal <= self.__kVal):
