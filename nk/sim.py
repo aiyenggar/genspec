@@ -5,10 +5,11 @@ Created on Wed Jul 22 05:50:00 2015
 @author: aiyenggar
 The sim class encapsulates the inputs and outputs of a simulation
 """
-
+import logging
 from enum import Enum
 import random
 import numpy
+import settings
 
 def getRandom():
     """ Return an Random Number between 0 and 1 """
@@ -22,21 +23,22 @@ class KDistribution(Enum):
     NORMAL = 2
 
 class SearchMethod(Enum):
-    GREEDY = 1 # TODO: Change to the formal term
-    STEEPEST = 2 # TODO: Change to the formal term
-
-A_DEFAULT = 2
+    GREEDY = 1
+    STEEPEST = 2
 
 class SimInput:
-    def __init__(self, n, k, a=A_DEFAULT):
+    def __init__(self, n, k, a=settings.A_DEFAULT):
         # Check that n is positive, k is positive and less than n
         self.__nVal = n
         self.__kVal = k
         self.__aVal = a
         self.__kSystem = KDistribution.FIXED
         self.__adjMatrix = None
-        self.__searchMethod = SearchMethod.STEEPEST
-        self.__mutateDistance = 2
+        self.__searchMethod = SearchMethod.GREEDY
+        self.__mutateDistance = 1
+        self.__precision = settings.CONTRIBUTION_PRECISION
+        self.logger =  logging.getLogger(__name__)
+
     def __del__(self):
         pass
 
@@ -45,6 +47,12 @@ class SimInput:
 
     def setSearchMethod(self, method):
         self.__searchMethod = method
+
+    def setMutateDistance(self, distance):
+        if distance >= 1:
+            self.__mutateDistance = distance
+        else:
+            self.logger.error("Invalid distance parameter to setMutateDistance: " + str(distance))
 
     def nValue(self):
         return self.__nVal
@@ -70,6 +78,9 @@ class SimInput:
 
     def mutateDistance(self):
         return self.__mutateDistance
+
+    def precision(self):
+        return self.__precision
 
     def generateAdjMatrix(self, kSys=None):
         if (self.__nVal <= self.__kVal):

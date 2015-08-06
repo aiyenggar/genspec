@@ -7,9 +7,8 @@ Created on Wed Jul 22 05:37:01 2015
 import logging
 import scipy
 import math
-from nk import sim
 
-ROUND = 4
+from nk import sim
 
 def listString(configuration):
     pString = ""
@@ -151,7 +150,7 @@ class NK:
         pString = ""
         for index in range(0, self.__inputs.nValue()):
             hashKey = self.getMaskedConfig(index, configuration)
-            pString += str(round(self.__fitnessDict[index][hashKey], ROUND))
+            pString += str(round(self.__fitnessDict[index][hashKey], self.__inputs.precision()))
             if index != (self.__inputs.nValue() - 1):
                 pString += ", "
         return pString
@@ -159,7 +158,7 @@ class NK:
     def logState(self, configuration, fitness, leadingString=""):
         pString = leadingString + listString(configuration) + " | "
         pString += self.nodeContriString(configuration) + " | "
-        pString += str(round(fitness, ROUND))
+        pString += str(round(fitness, self.__inputs.precision()))
         self.logger.info(pString)
 
     def mutate(self, nodeConfig, nodeFitness):
