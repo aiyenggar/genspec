@@ -13,5 +13,5 @@ LANDSCAPES_DEFAULT = 100
 #kList = [0, 2, 4, 8, 16, 24, 48, 96]
 kList = [0, 2, 4, 8, 16, 24]
 #nList = [8, 16, 24, 48, 96]
-nList = [4]
+nList = [2]
 landscapes = 100

@@ -226,6 +226,7 @@ class NK:
         if (self.__inputs.searchMethod() == sim.SearchMethod.STEEPEST):
             neighbours = self.getnHDNeighbours(nodeConfig, self.__inputs.mutateDistance())
             for adjConfig in neighbours:
+                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(adjConfig, nodeConfig)
                 systemFitness = self.getFitness(adjConfig)
@@ -249,6 +250,7 @@ class NK:
             exploredNeighbours = {}
             maxNeighbours = self.getMaxNeighbours()
             while len(exploredNeighbours) < maxNeighbours:
+                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
                 randomConfig = self.getJumpNeighbour(nodeConfig, 
                                                      self.__inputs.mutateDistance(), 
                                                      self.__inputs.cumulativeDistance()
@@ -284,7 +286,7 @@ class NK:
 
 
     def runSimulation(self, keyVal, countLandscapes):
-        header = ["Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
+        header = ["Fields", "Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
         header += ["Landscape", "NumberOfLandscapes", "AttemptedFlips", "AcceptedFlips", "WasFlipAccepted"]
         header += ["CurrentConfiguration", "CurrentSystemFitness", "ConsideredConfiguration"]
         for i in range(0, self.__inputs.nValue()):
@@ -292,7 +294,7 @@ class NK:
         header.append("ConsideredSystemFitness")
                 
         transactionCSVFile = open('output.csv', 'w')
-        transWriter = csv.writer(transactionCSVFile)
+        transWriter = csv.writer(transactionCSVFile, dialect='excel')
         transWriter.writerow(header)
         outputs = sim.SimOutput()
         outputs.setLandscapes(countLandscapes)
