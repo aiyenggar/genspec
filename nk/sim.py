@@ -15,8 +15,14 @@ def getRandom():
     """ Return an Random Number between 0 and 1 """
     return random.random()
 
-def getRandomInt(start, end):
-    return random.randint(start, end)
+def getRandomInt(start, end, avoid={}):
+    """ Generate a random number in [start, end] that is not in avoid """
+    """ The below assert is not an accurate test. It will fail when avoid includes entries outside start - end """
+    assert (end-start+1 > len(avoid)), "Avoid includes all possibilities. Unable to generate random"
+    rand = random.randint(start, end)
+    while rand in avoid: #We found a random that the user does not want
+        rand = random.randint(start, end)
+    return rand
 
 class KDistribution(Enum):
     FIXED = 1
@@ -37,6 +43,7 @@ class SimInput:
         self.__searchMethod = SearchMethod.GREEDY
         self.__mutateDistance = 1
         self.__precision = settings.CONTRIBUTION_PRECISION
+        self.__cumulativeDistance = True
         self.logger =  logging.getLogger(__name__)
 
     def __del__(self):
@@ -53,6 +60,12 @@ class SimInput:
             self.__mutateDistance = distance
         else:
             self.logger.error("Invalid distance parameter to setMutateDistance: " + str(distance))
+
+    def setCumulativeDistance(self, boolVal):
+        self.__cumulativeDistance = boolVal
+    
+    def cumulativeDistance(self):
+        return self.__cumulativeDistance
 
     def nValue(self):
         return self.__nVal
@@ -115,11 +128,9 @@ class SimInput:
         else:
             None
 
-LANDSCAPES_DEFAULT = 100
-
 class SimOutput:
     def __init__(self):
-        self.__landscapes = LANDSCAPES_DEFAULT
+        self.__landscapes = settings.LANDSCAPES_DEFAULT
         self.__fitnessDistribution = None
         self.__attemptedFlips = None
         self.__acceptedFlips = None
@@ -167,3 +178,27 @@ class SimOutput:
 
     def lenAcceptedFlips(self):
         return len(self.__acceptedFlips)
+        
+class SimAttemptStatistics:
+    def __init__(self, keyVal, nVal, kVal, aVal):
+        self.key = keyVal
+        self.nValue = nVal
+        self.kValue = kVal
+        self.aValue = aVal
+        self.searchMethod = SearchMethod.GREEDY
+        self.distance = 0
+        self.isDistanceCumulative = True
+        self.landscape = 0
+        self.numLandscapes = 0
+        self.numAttemptedFlips = 0
+        self.numAcceptedFlips = 0
+        self.wasFlipAccepted = 0
+        self.currentConfig = ""
+        self.currentFitness = []
+        self.consideredConfig = ""
+        self.consideredContributions = []
+        self.consideredFitness = []        
+        
+    def __del__(self):
+        pass
+    

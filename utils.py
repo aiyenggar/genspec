@@ -4,7 +4,7 @@ Created on Thu Aug  6 10:55:01 2015
 
 @author: aiyenggar
 """
-import logging
+import logging.config
 import os
 import json
 import time

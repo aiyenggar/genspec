@@ -7,6 +7,7 @@ Created on Wed Jul 22 06:00:03 2015
 import logging
 import utils
 import settings
+import time
 from nk import sim, model
 
 utils.setupLogging();
@@ -29,7 +30,8 @@ for nVal in settings.nList:
             utils.logInitialConditions(logger, params, landscapes)
 
             simulation = model.NK(params)
-            output = simulation.runSimulation(landscapes)
+            key = int(round(time.time() * 1000))
+            output = simulation.runSimulation(key, landscapes)
 
             utils.logResults(logger, params, output, landscapes)
 
