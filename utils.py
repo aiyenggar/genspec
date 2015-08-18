@@ -9,7 +9,11 @@ import os
 import json
 import time
 import settings
+import datetime
 
+def getDefaultSeedObject():
+    return datetime.datetime(1980, 11, 8, 6, 4, 0)
+    
 def setupLogging(
     default_path='logging.json',
     default_level=logging.ERROR,

@@ -26,7 +26,7 @@ for nVal in settings.nList:
             else:
                 params = sim.SimInput(nVal, kVal)
 
-            params.setSearchMethod(sim.SearchMethod.GREEDY)
+            params.setSearchMethod(sim.SearchMethod.STEEPEST)
             params.setMutateDistance(2)
             params.generateAdjMatrix()
 

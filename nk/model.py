@@ -8,6 +8,7 @@ import logging
 import scipy
 import math
 import csv
+import settings
 
 from nk import sim
 
@@ -122,20 +123,25 @@ class NK:
             current = nextConfig
         return current
 
-    def getnHDNeighbours(self, configuration, distance=1):
+    def getNeighbours(self, configuration, distance=1):
         """
         Generate all node configurations that are at a given
         hamming distance from the given node configuration
         """
-        currentLevel = []
+        allNodes = []
         nextLevel = []
-        currentLevel.append(configuration)
+        nextLevel.append(tuple(configuration))
+        allNodes.append(set(nextLevel))
         for index in range(0, distance):
-            for popConfig in currentLevel:
-                nextLevel.extend(self.get1HDNeighbours(popConfig))
-            currentLevel = nextLevel
             nextLevel = []
-        return currentLevel
+            for popConfig in allNodes[index]:
+                nextLevel.extend(self.get1HDNeighbours(popConfig))
+            allNodes.append(set(nextLevel))
+        allNeighbours = set([])
+        for index in range(0, distance):
+            allNeighbours = allNeighbours.union(allNodes[index+1])
+        allNeighbours.remove(tuple(configuration))
+        return list(allNeighbours)
 
     def get1HDNeighbours(self, configuration):
         """
@@ -150,7 +156,7 @@ class NK:
                 if (nextAllele != configuration[nextNode]):
                     nextNeighbour = list(configuration)
                     nextNeighbour[nextNode] = nextAllele
-                    listNeighbours.append(nextNeighbour)
+                    listNeighbours.append(tuple(nextNeighbour))
                 nextAllele += 1
             nextNode += 1
         return listNeighbours
@@ -224,7 +230,7 @@ class NK:
         selectedConfig = nodeConfig
         selectedFitness = nodeFitness
         if (self.__inputs.searchMethod() == sim.SearchMethod.STEEPEST):
-            neighbours = self.getnHDNeighbours(nodeConfig, self.__inputs.mutateDistance())
+            neighbours = self.getNeighbours(nodeConfig, self.__inputs.mutateDistance())
             for adjConfig in neighbours:
                 transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
                 self.__attemptedFlips += 1
@@ -293,7 +299,7 @@ class NK:
             header.append("w" + str(i))
         header.append("ConsideredSystemFitness")
                 
-        transactionCSVFile = open('output.csv', 'w')
+        transactionCSVFile = open(settings.TRANSACTION_CSV_FILE, 'w')
         transWriter = csv.writer(transactionCSVFile, dialect='excel')
         transWriter.writerow(header)
         outputs = sim.SimOutput()
