@@ -49,7 +49,7 @@ def logResults(logger, inp, output, landscapes):
                 logger.log(settings.OUTPUT_LOG_LEVEL,
                     "<N=" + str(inp.nValue()) +
                     " K=" + str(inp.kValue()) +
-                    " Landscapes:" + str(landscapes) +
+                    " Distance:" + str(inp.mutateDistance()) +
                     " Search:" + inp.searchMethodString() + "> " +
                     str(round(output.meanFitness(),2)) +
                     "(" + str(round(output.stddevFitness(), 2)) + ")" +

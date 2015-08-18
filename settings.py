@@ -14,5 +14,5 @@ RESULTS_CSV_FILE = 'results.csv'
 #kList = [0, 2, 4, 8, 16, 24, 48, 96]
 kList = [0, 2, 4, 8, 16, 24]
 #nList = [8, 16, 24, 48, 96]
-nList = [4]
-landscapes = 1
+nList = [8, 16]
+landscapes = 100

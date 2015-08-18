@@ -140,7 +140,8 @@ class NK:
         allNeighbours = set([])
         for index in range(0, distance):
             allNeighbours = allNeighbours.union(allNodes[index+1])
-        allNeighbours.remove(tuple(configuration))
+        if tuple(configuration) in allNeighbours:
+            allNeighbours.remove(tuple(configuration))
         return list(allNeighbours)
 
     def get1HDNeighbours(self, configuration):
