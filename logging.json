@@ -36,8 +36,8 @@
             "level": "DEBUG",
             "formatter": "simple",
             "filename": "log/debug.log",
-            "maxBytes": 16777216,
-            "backupCount": 20,
+            "maxBytes": 268435456,
+            "backupCount": 10,
             "encoding": "utf8"
         },
 
