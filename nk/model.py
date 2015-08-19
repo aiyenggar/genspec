@@ -288,6 +288,47 @@ class NK:
                     selectedFitness = systemFitness
                     return [selectedConfig, selectedFitness]
             return [selectedConfig, selectedFitness]
+        elif (self.__inputs.searchMethod() == sim.SearchMethod.RANDOMTHENSTEEPEST):
+            """ Assumed that the first jump is random and 
+                the rest of self.__inputs.mutateDistance() is STEEPEST """
+            transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+            randomConfig = self.getJumpNeighbour(nodeConfig, 1, False)
+            self.refreshFitnessContributions(randomConfig, nodeConfig)
+            systemFitness = self.getFitness(nodeConfig)
+            self.logState(nodeConfig, systemFitness, "\t")
+            self.__attemptedFlips += 1
+            self.__acceptedFlips += 1
+            flag = 1
+            transStats = self.updateStatsListFlips(transStats, self.__attemptedFlips,
+                                      self.__acceptedFlips, flag)
+            transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
+            transStats = self.updateStatsListConsidered(transStats, randomConfig, systemFitness)
+            transWriter.writerow(transStats)
+            if (flag == 1):
+                    selectedConfig = list(randomConfig)
+                    selectedFitness = systemFitness
+            neighbours = self.getNeighbours(randomConfig, self.__inputs.mutateDistance()-1)
+            for adjConfig in neighbours:
+                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+                self.__attemptedFlips += 1
+                self.refreshFitnessContributions(adjConfig, randomConfig)
+                systemFitness = self.getFitness(adjConfig)
+                self.logState(adjConfig, systemFitness, "\t")
+                
+                if (systemFitness > selectedFitness):
+                    flag = 1
+                    self.__acceptedFlips += 1
+                else:
+                    flag = 0
+                transStats = self.updateStatsListFlips(transStats, self.__attemptedFlips,
+                                          self.__acceptedFlips, flag)
+                transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
+                transStats = self.updateStatsListConsidered(transStats, adjConfig, systemFitness)
+                transWriter.writerow(transStats)
+                if (flag == 1):
+                    selectedConfig = list(adjConfig)
+                    selectedFitness = systemFitness
+            return [selectedConfig, selectedFitness]
         else:
             return None
 
@@ -315,7 +356,7 @@ class NK:
             self.refreshFitnessContributions(self.__nodeConfig)
             systemFitness = self.getFitness(self.__nodeConfig)
             self.logState(self.__nodeConfig, systemFitness)
-            while 1:
+            while self.__attemptedFlips < settings.MAX_ATTEMPTED_FLIPS:
                 prevNodeConfig = list(self.__nodeConfig)
                 [mutatedConfig, mutatedFitness] = self.searchNext(self.__nodeConfig,
                                                     systemFitness, transWriter,

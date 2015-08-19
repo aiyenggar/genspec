@@ -31,6 +31,7 @@ class KDistribution(Enum):
 class SearchMethod(Enum):
     GREEDY = 1
     STEEPEST = 2
+    RANDOMTHENSTEEPEST = 3
 
 class SimInput:
     def __init__(self, n, k, a=settings.A_DEFAULT):
@@ -87,6 +88,8 @@ class SimInput:
             return "STEEPEST"
         if self.__searchMethod == SearchMethod.GREEDY:
             return "GREEDY"
+        if self.__searchMethod == SearchMethod.RANDOMTHENSTEEPEST:
+            return "RandomThenSteepest"
         return None
 
     def mutateDistance(self):
