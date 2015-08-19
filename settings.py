@@ -16,4 +16,4 @@ kList = [0, 2, 4, 8, 16, 24, 48]
 #nList = [8, 16, 24, 48, 96]
 nList = [16]
 landscapes = 100
-MAX_ATTEMPTED_FLIPS = 1000
+MAX_ATTEMPTED_FLIPS = 20000

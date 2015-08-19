@@ -66,7 +66,7 @@ for nVal in settings.nList:
                 nextRow.append(output.meanAttemptedFlips())
                 nextRow.append(output.meanAcceptedFlips())
                 resWriter.writerow(nextRow)
-
+                resFile.flush()
                 results.append([params, output])
                 
                 params = None
