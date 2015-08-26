@@ -2,3 +2,7 @@ log
 log/*
 *.log
 *.log.*
+
+*.pyc
+
+output.csv
