@@ -45,9 +45,18 @@ class SimInput:
         self.__mutateDistance = 1
         self.__precision = settings.CONTRIBUTION_PRECISION
         self.__cumulativeDistance = True
+        self.__startConfigGiven = False
+        self.__startNodeConfig = None
+        self.__startFitnessDict = None
         self.logger =  logging.getLogger(__name__)
 
     def __del__(self):
+        pass
+
+    def setStartConfig(self, startNodeConfig, startFitnessDict):
+        self.__startConfigGiven = True
+        self.__startNodeConfig = startNodeConfig
+        self.__startFitnessDict = startFitnessDict
         pass
 
     def setKSystem(self, kSys):
@@ -89,7 +98,7 @@ class SimInput:
         if self.__searchMethod == SearchMethod.GREEDY:
             return "GREEDY"
         if self.__searchMethod == SearchMethod.RANDOMTHENSTEEPEST:
-            return "RandomThenSteepest"
+            return "RANDOMThenSTEEPEST"
         return None
 
     def mutateDistance(self):
@@ -131,6 +140,12 @@ class SimInput:
         else:
             None
 
+    def isUserDefinedStartConfig(self):
+        return self.__startConfigGiven
+        
+    def startConfig(self):
+        return [self.__startNodeConfig, self.__startFitnessDict]
+        
 class SimOutput:
     def __init__(self):
         self.__landscapes = settings.LANDSCAPES_DEFAULT

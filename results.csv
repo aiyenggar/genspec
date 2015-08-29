@@ -1,10 +1,4 @@
 N,K,Fitness,SearchMethod,Distance,CumulativeDistance,NumberOfLandscapes,StdDevFitness,AttemptedFlips,AcceptedFlips
-4,0,0.636454028651,RandomThenSteepest,2,True,4,0.0663592486843,10.0,2.0
-4,2,0.684415712746,RandomThenSteepest,2,True,4,0.13027156133,10.0,1.75
-4,3,0.658258778451,RandomThenSteepest,2,True,4,0.0633715701689,7.0,1.0
+8,0,0.739940974101,RANDOMThenSTEEPEST,2,True,1,0.0,8.0,0.0
 N,K,Fitness,SearchMethod,Distance,CumulativeDistance,NumberOfLandscapes,StdDevFitness,AttemptedFlips,AcceptedFlips
-16,0,0.608286863344,RandomThenSteepest,2,True,100,0.0660485411777,62.4,7.04
-16,2,0.647932773317,RandomThenSteepest,2,True,100,0.0611554315952,57.76,5.65
-16,4,0.649938076713,RandomThenSteepest,2,True,100,0.047618806169,52.96,4.68
-16,8,0.649258539744,RandomThenSteepest,2,True,100,0.0475317691664,43.2,3.55
-16,15,0.650736403215,RandomThenSteepest,2,True,100,0.0360157076034,39.36,2.8
+4,0,0.812726261133,GREEDY,2,True,1,0.0,32.0,1.0

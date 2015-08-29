@@ -21,8 +21,11 @@ def listString(configuration):
 class NK:
     def __init__(self, simInput):
         self.__inputs = simInput
-        self.__nodeConfig = None
-        self.__fitnessDict = None
+        if simInput.isUserDefinedStartConfig():
+            [self.__nodeConfig, self.__fitnessDict] = simInput.startConfig()
+        else:
+            self.__nodeConfig = None
+            self.__fitnessDict = None
         self.logger =  logging.getLogger(__name__)
 
     def setup(self):
@@ -30,11 +33,13 @@ class NK:
         self.__fitnessDict = dict({})
         self.__attemptedFlips = 0
         self.__acceptedFlips = 0
-        for index in range(0, self.__inputs.nValue()):
-            nextNodeValue = sim.getRandomInt(0, self.__inputs.aValue()-1)
-            self.__nodeConfig.append(nextNodeValue)
-            self.__fitnessDict[index] = dict({})
-
+        if self.__inputs.isUserDefinedStartConfig():
+            pass
+        else:
+            for index in range(0, self.__inputs.nValue()):
+                nextNodeValue = sim.getRandomInt(0, self.__inputs.aValue()-1)
+                self.__nodeConfig.append(nextNodeValue)
+                self.__fitnessDict[index] = dict({})
 
     def getMaskedConfig(self, nodeIndex, configuration):
         """
@@ -170,6 +175,9 @@ class NK:
             if index != (self.__inputs.nValue() - 1):
                 pString += ", "
         return pString
+
+    def nodeConfig(self):
+        return list(self.__nodeConfig)
 
     def logState(self, configuration, fitness, leadingString=""):
         pString = leadingString + listString(configuration) + " | "
@@ -330,7 +338,7 @@ class NK:
             header.append("w" + str(i))
         header.append("ConsideredSystemFitness")
                 
-        transactionCSVFile = open(settings.TRANSACTION_CSV_FILE, 'w')
+        transactionCSVFile = open(settings.TRANSACTION_CSV_FILE, 'a')
         transWriter = csv.writer(transactionCSVFile, dialect='excel')
         transWriter.writerow(header)
         outputs = sim.SimOutput()
@@ -345,7 +353,7 @@ class NK:
             self.refreshFitnessContributions(self.__nodeConfig)
             systemFitness = self.getFitness(self.__nodeConfig)
             self.logState(self.__nodeConfig, systemFitness)
-            while self.__attemptedFlips < settings.MAX_ATTEMPTED_FLIPS:
+            while 1:
                 prevNodeConfig = list(self.__nodeConfig)
                 [mutatedConfig, mutatedFitness] = self.searchNext(self.__nodeConfig,
                                                     systemFitness, transWriter,
