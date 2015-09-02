@@ -31,6 +31,7 @@ class NK:
     def setup(self):
         self.__nodeConfig = list([])
         self.__fitnessDict = dict({})
+        self.__randContext = dict({})
         self.__attemptedFlips = 0
         self.__acceptedFlips = 0
         if self.__inputs.isUserDefinedStartConfig():
@@ -179,6 +180,13 @@ class NK:
     def nodeConfig(self):
         return list(self.__nodeConfig)
 
+    def randContext(self, nodeConfig):
+        keyValue = tuple(nodeConfig)
+        if keyValue in self.__randContext:
+            return self.__randContext[keyValue]
+        else:
+            return None
+
     def logState(self, configuration, fitness, leadingString=""):
         pString = leadingString + listString(configuration) + " | "
         pString += self.nodeContriString(configuration) + " | "
@@ -221,7 +229,7 @@ class NK:
 
     def updateStatsListCurrent(self, fields, currentConfig, currentFitness):
         fields.append(listString(currentConfig))
-        fields.append(currentFitness)
+        fields.append(round(currentFitness, self.__inputs.precision()))
         fields[0] = len(fields)
         return fields
         
@@ -230,11 +238,12 @@ class NK:
         for j in range(0, self.__inputs.nValue()):
             hashKey = self.getMaskedConfig(j, consideredConfig)
             fields.append(round(self.__fitnessDict[j][hashKey], self.__inputs.precision()))
-        fields.append(consideredFitness)
+        fields.append(round(consideredFitness, self.__inputs.precision()))
         fields[0] = len(fields)
         return fields
 
     def searchNext(self, nodeConfig, nodeFitness, transWriter, keyVal, countLandscapes, iteration):
+        searchExhausted = False
         transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
         selectedConfig = nodeConfig
         selectedFitness = nodeFitness
@@ -260,7 +269,9 @@ class NK:
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = systemFitness
-            return [selectedConfig, selectedFitness]
+            if (selectedConfig == nodeConfig):
+                searchExhausted = True
+            return [selectedConfig, selectedFitness, searchExhausted]
         elif (self.__inputs.searchMethod() == sim.SearchMethod.GREEDY):          
             exploredNeighbours = {}
             maxNeighbours = self.getMaxNeighbours()
@@ -294,12 +305,24 @@ class NK:
                 if flag == 1:
                     selectedConfig = list(randomConfig)
                     selectedFitness = systemFitness
-                    return [selectedConfig, selectedFitness]
-            return [selectedConfig, selectedFitness]
+                    return [selectedConfig, selectedFitness, searchExhausted]
+            """ If the best node is the same node the search started with, then
+                we have reached a local maximum and there is no point searching anymore """
+            if (selectedConfig == nodeConfig):
+                searchExhausted = True
+            return [selectedConfig, selectedFitness, searchExhausted]
         elif (self.__inputs.searchMethod() == sim.SearchMethod.RANDOMTHENSTEEPEST):
             """ Assumed that the first jump is random and 
                 the rest of self.__inputs.mutateDistance() is STEEPEST """
             baseConfig = self.getJumpNeighbour(nodeConfig, 1, False)
+            """ Since only the first mutation is assumed random """
+            maxRandomNeighbours = self.__inputs.nValue() * (self.__inputs.aValue() - 1)
+            keyEntry = tuple(nodeConfig)
+            valueEntry = tuple(baseConfig)
+            if keyEntry not in self.__randContext:
+                self.__randContext[keyEntry] = set()
+            if valueEntry != keyEntry:
+                self.__randContext[keyEntry] = self.__randContext[keyEntry].union([valueEntry])
             self.refreshFitnessContributions(baseConfig, nodeConfig)
             self.logState(baseConfig, self.getFitness(baseConfig), "R\t")
             selectedConfig = nodeConfig
@@ -325,7 +348,9 @@ class NK:
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = adjFitness
-            return [selectedConfig, selectedFitness]
+            if (len(self.__randContext[keyEntry]) == maxRandomNeighbours):
+                searchExhausted = True
+            return [selectedConfig, selectedFitness, searchExhausted]
         else:
             return None
 
@@ -354,13 +379,11 @@ class NK:
             systemFitness = self.getFitness(self.__nodeConfig)
             self.logState(self.__nodeConfig, systemFitness)
             while 1:
-                prevNodeConfig = list(self.__nodeConfig)
-                [mutatedConfig, mutatedFitness] = self.searchNext(self.__nodeConfig,
+                [mutatedConfig, mutatedFitness, terminate] = self.searchNext(self.__nodeConfig,
                                                     systemFitness, transWriter,
-                                                    keyVal, countLandscapes,
-                                                    outerIterations)
+                                                    keyVal, countLandscapes, outerIterations)
                 self.logState(mutatedConfig, mutatedFitness)
-                if (mutatedConfig == prevNodeConfig):
+                if (terminate == True):
                     break
                 self.__nodeConfig = list(mutatedConfig)
                 systemFitness = mutatedFitness

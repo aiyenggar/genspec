@@ -37,8 +37,11 @@ def logLine(logger):
     logger.info("---------------------------------------------")
 
 def logInitialConditions(logger, inp, landscapes):
-    logger.info(time.strftime("%Y-%m-%d %H:%M:%S") + " Simulating: N = " + str(inp.nValue()) + " K = " + str(inp.kValue()))
-    logger.info("Search: " + inp.searchMethodString() + " Landscapes = " + str(landscapes))
+    logger.info(time.strftime("%Y-%m-%d %H:%M:%S"))
+    logger.info("Simulating: N = " + str(inp.nValue()) + " K = " + str(inp.kValue()) + " Landscapes = " + str(landscapes))
+    logger.info("Search: " + inp.searchMethodString() + 
+                " Distance = " + str(inp.mutateDistance()) + 
+                " Cumulative = " + str(inp.cumulativeDistance()))
     logger.info("Adjacency Matrix")
     adjMatrix = inp.adjMatrix()
     for row in adjMatrix:

@@ -13,16 +13,13 @@ import random
 from nk import sim, model
 
 runConfigs = [  
-#                [sim.SearchMethod.STEEPEST, 2, False],
-#                [sim.SearchMethod.STEEPEST, 2, False],
-#                [sim.SearchMethod.STEEPEST, 1, False],
-#                [sim.SearchMethod.STEEPEST, 1, True],
-#                [sim.SearchMethod.GREEDY, 2, True],
-#                [sim.SearchMethod.STEEPEST, 2, False],
-#                [sim.SearchMethod.GREEDY, 1, False],
-                [sim.SearchMethod.GREEDY, 2, True]
+                [sim.SearchMethod.GREEDY, 1, True],
+                [sim.SearchMethod.GREEDY, 2, True],
+                [sim.SearchMethod.STEEPEST, 1, True],
+                [sim.SearchMethod.STEEPEST, 2, True],
+                [sim.SearchMethod.RANDOMTHENSTEEPEST, 2, True]
             ]
-#random.seed(utils.getDefaultSeedObject())
+random.seed(utils.getDefaultSeedObject())
 utils.setupLogging();
 
 results = []
