@@ -49,7 +49,7 @@ def logInitialConditions(logger, inp, landscapes):
     logLine(logger)
 
 def logResults(logger, inp, output, landscapes):
-                logger.log(settings.OUTPUT_LOG_LEVEL,
+    logger.log(settings.OUTPUT_LOG_LEVEL,
                     "<N=" + str(inp.nValue()) +
                     " K=" + str(inp.kValue()) +
                     " Distance:" + str(inp.mutateDistance()) +
@@ -59,3 +59,10 @@ def logResults(logger, inp, output, landscapes):
                     " " + str(round(output.meanAttemptedFlips(),2)) +
                     " " + str(round(output.meanAcceptedFlips(),2))
                  )
+#    for [attempted, fitness] in output.stagedStatistics():
+#                    logger.log(settings.OUTPUT_LOG_LEVEL, 
+#                               str(inp.nValue()) +
+#                               ", " + str(inp.kValue()) +
+#                               ", " + str(attempted) + 
+#                               ", " + str(fitness)
+#                               )

@@ -7,8 +7,8 @@ Created on Wed Jul 22 05:37:01 2015
 import logging
 import scipy
 import math
-import csv
-import settings
+#import csv
+#import settings
 
 from nk import sim
 
@@ -29,14 +29,14 @@ class NK:
         self.logger =  logging.getLogger(__name__)
 
     def setup(self):
-        self.__nodeConfig = list([])
-        self.__fitnessDict = dict({})
         self.__randContext = dict({})
         self.__attemptedFlips = 0
         self.__acceptedFlips = 0
         if self.__inputs.isUserDefinedStartConfig():
             pass
         else:
+            self.__nodeConfig = list([])
+            self.__fitnessDict = dict({})
             for index in range(0, self.__inputs.nValue()):
                 nextNodeValue = sim.getRandomInt(0, self.__inputs.aValue()-1)
                 self.__nodeConfig.append(nextNodeValue)
@@ -180,6 +180,9 @@ class NK:
     def nodeConfig(self):
         return list(self.__nodeConfig)
 
+    def fitnessDict(self):
+        return dict(self.__fitnessDict)
+        
     def randContext(self, nodeConfig):
         keyValue = tuple(nodeConfig)
         if keyValue in self.__randContext:
@@ -205,7 +208,7 @@ class NK:
             maxNeighbours += combinations * variations
         return maxNeighbours
 
-    def getDefaultStatsList(self, keyVal, countLandscapes, iteration):
+    def getDefaultStatsList(self, keyVal, iteration):
         fields = []
         fields.append(0)
         fields.append(keyVal)
@@ -216,7 +219,6 @@ class NK:
         fields.append(self.__inputs.mutateDistance())
         fields.append(self.__inputs.cumulativeDistance())
         fields.append(iteration)
-        fields.append(countLandscapes)
         fields[0] = len(fields)
         return fields
         
@@ -241,16 +243,22 @@ class NK:
         fields.append(round(consideredFitness, self.__inputs.precision()))
         fields[0] = len(fields)
         return fields
-
-    def searchNext(self, nodeConfig, nodeFitness, transWriter, keyVal, countLandscapes, iteration):
+        
+    def outOfOxygen(self):
+        if self.__attemptedFlips >= self.__inputs.ceilingAttemptedFlips():
+            return True
+        else:
+            return False
+            
+    def searchNext(self, nodeConfig, nodeFitness, transWriter, keyVal, iteration):
         searchExhausted = False
-        transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+        transStats = self.getDefaultStatsList(keyVal, iteration)
         selectedConfig = nodeConfig
         selectedFitness = nodeFitness
         if (self.__inputs.searchMethod() == sim.SearchMethod.STEEPEST):
             neighbours = self.getNeighbours(nodeConfig, self.__inputs.mutateDistance())
             for adjConfig in neighbours:
-                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+                transStats = self.getDefaultStatsList(keyVal, iteration)
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(adjConfig, nodeConfig)
                 systemFitness = self.getFitness(adjConfig)
@@ -269,6 +277,9 @@ class NK:
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = systemFitness
+                if (self.outOfOxygen()):
+                    searchExhausted = True
+                    break
             if (selectedConfig == nodeConfig):
                 searchExhausted = True
             return [selectedConfig, selectedFitness, searchExhausted]
@@ -276,7 +287,7 @@ class NK:
             exploredNeighbours = {}
             maxNeighbours = self.getMaxNeighbours()
             while len(exploredNeighbours) < maxNeighbours:
-                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+                transStats = self.getDefaultStatsList(keyVal, iteration)
                 randomConfig = self.getJumpNeighbour(nodeConfig, 
                                                      self.__inputs.mutateDistance(), 
                                                      self.__inputs.cumulativeDistance()
@@ -306,6 +317,9 @@ class NK:
                     selectedConfig = list(randomConfig)
                     selectedFitness = systemFitness
                     return [selectedConfig, selectedFitness, searchExhausted]
+                if (self.outOfOxygen()):
+                    searchExhausted = True
+                    break
             """ If the best node is the same node the search started with, then
                 we have reached a local maximum and there is no point searching anymore """
             if (selectedConfig == nodeConfig):
@@ -329,7 +343,7 @@ class NK:
             selectedFitness = nodeFitness
             neighbours = self.getNeighbours(baseConfig, self.__inputs.mutateDistance()-1)
             for adjConfig in neighbours:
-                transStats = self.getDefaultStatsList(keyVal, countLandscapes, iteration)
+                transStats = self.getDefaultStatsList(keyVal, iteration)
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(adjConfig, baseConfig)
                 adjFitness = self.getFitness(adjConfig)
@@ -348,6 +362,9 @@ class NK:
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = adjFitness
+                if (self.outOfOxygen()):
+                    searchExhausted = True
+                    break
             if (len(self.__randContext[keyEntry]) == maxRandomNeighbours):
                 searchExhausted = True
             return [selectedConfig, selectedFitness, searchExhausted]
@@ -355,47 +372,22 @@ class NK:
             return None
 
 
-    def runSimulation(self, keyVal, countLandscapes):
-        header = ["Fields", "Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
-        header += ["Landscape", "NumberOfLandscapes", "AttemptedFlips", "AcceptedFlips", "WasFlipAccepted"]
-        header += ["CurrentConfiguration", "CurrentSystemFitness", "ConsideredConfiguration"]
-        for i in range(0, self.__inputs.nValue()):
-            header.append("w" + str(i))
-        header.append("ConsideredSystemFitness")
-                
-        transactionCSVFile = open(settings.TRANSACTION_CSV_FILE, 'a')
-        transWriter = csv.writer(transactionCSVFile, dialect='excel')
-        transWriter.writerow(header)
-        outputs = sim.SimOutput()
-        outputs.setLandscapes(countLandscapes)
-        outerIterations = 0
-        fitnessDistribution = []
-        attemptedFlipsDist = []
-        acceptedFlipsDist = []
-        while outerIterations < countLandscapes:
-            self.logger.info("Begin Searching Landscape #: " + str(outerIterations))
-            self.setup()
-            self.refreshFitnessContributions(self.__nodeConfig)
-            systemFitness = self.getFitness(self.__nodeConfig)
-            self.logState(self.__nodeConfig, systemFitness)
-            while 1:
-                [mutatedConfig, mutatedFitness, terminate] = self.searchNext(self.__nodeConfig,
-                                                    systemFitness, transWriter,
-                                                    keyVal, countLandscapes, outerIterations)
-                self.logState(mutatedConfig, mutatedFitness)
-                if (terminate == True):
-                    break
-                self.__nodeConfig = list(mutatedConfig)
-                systemFitness = mutatedFitness
-            fitnessDistribution.append(systemFitness)
-            attemptedFlipsDist.append(self.__attemptedFlips)
-            acceptedFlipsDist.append(self.__acceptedFlips)
-            self.logger.info("End Searching Landscape #: " + str(outerIterations))
-            outerIterations += 1
-        outputs.setFinessDistribution(fitnessDistribution)
-        outputs.setAttemptedFlipsDistribution(attemptedFlipsDist)
-        outputs.setAcceptedFlipsDistribution(acceptedFlipsDist)
-        transactionCSVFile.close()
-        return outputs
+    def run(self, keyVal, outerIterations, transWriter):
+        self.logger.info("Begin Searching Landscape #: " + str(outerIterations))
+        self.setup()
+        self.refreshFitnessContributions(self.__nodeConfig)
+        systemFitness = self.getFitness(self.__nodeConfig)
+        self.logState(self.__nodeConfig, systemFitness)
+        while 1:
+            [mutatedConfig, mutatedFitness, terminate] = self.searchNext(self.__nodeConfig,
+                                                systemFitness, transWriter,
+                                                keyVal, outerIterations)
+            self.logState(mutatedConfig, mutatedFitness)
+            if (terminate == True):
+                break
+            self.__nodeConfig = list(mutatedConfig)
+            systemFitness = mutatedFitness
+        
+        return [systemFitness, self.__attemptedFlips, self.__acceptedFlips]
 
 """ End of Class NK """

@@ -41,18 +41,23 @@ class SimInput:
         self.__aVal = a
         self.__kSystem = KDistribution.FIXED
         self.__adjMatrix = None
-        self.__searchMethod = SearchMethod.GREEDY
-        self.__mutateDistance = 1
-        self.__precision = settings.CONTRIBUTION_PRECISION
-        self.__cumulativeDistance = True
+        self.__precision = settings.CONTRIBUTION_PRECISION        
         self.__startConfigGiven = False
         self.__startNodeConfig = None
         self.__startFitnessDict = None
+        self.__ceilingAttemptedFlips = settings.MAXIMUM_ATTEMPTED_FLIPS_DEFAULT
         self.logger =  logging.getLogger(__name__)
+        self.__searchMethod = SearchMethod.GREEDY
+        self.__mutateDistance = 1
+        self.__cumulativeDistance = True
 
     def __del__(self):
         pass
 
+    def setCeilingAttemptedFlips(self, maxAttemptedFlips):
+        self.__ceilingAttemptedFlips = maxAttemptedFlips
+        return self.__ceilingAttemptedFlips
+    
     def setStartConfig(self, startNodeConfig, startFitnessDict):
         self.__startConfigGiven = True
         self.__startNodeConfig = startNodeConfig
@@ -73,7 +78,10 @@ class SimInput:
 
     def setCumulativeDistance(self, boolVal):
         self.__cumulativeDistance = boolVal
-    
+     
+    def ceilingAttemptedFlips(self):
+        return self.__ceilingAttemptedFlips
+        
     def cumulativeDistance(self):
         return self.__cumulativeDistance
 
@@ -166,6 +174,12 @@ class SimOutput:
 
     def setAcceptedFlipsDistribution(self, distribution):
         self.__acceptedFlips = distribution
+        
+    def setStagedStatistics(self, stagedStats):
+        self.__stagedStatistics = stagedStats
+
+    def stagedStatistics(self):
+        return self.__stagedStatistics
 
     def landscapes(self):
         return self.__landscapes

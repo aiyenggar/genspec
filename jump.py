@@ -13,13 +13,11 @@ import random
 from nk import sim, model
 
 runConfigs = [  
-                [sim.SearchMethod.GREEDY, 1, True],
                 [sim.SearchMethod.GREEDY, 2, True],
-                [sim.SearchMethod.STEEPEST, 1, True],
-                [sim.SearchMethod.STEEPEST, 2, True],
-                [sim.SearchMethod.RANDOMTHENSTEEPEST, 2, True]
+#                [sim.SearchMethod.STEEPEST, 2, True],
+#                [sim.SearchMethod.RANDOMTHENSTEEPEST, 2, True]
             ]
-random.seed(utils.getDefaultSeedObject())
+#random.seed(utils.getDefaultSeedObject())
 utils.setupLogging();
 
 results = []
@@ -41,16 +39,41 @@ for nVal in settings.nList:
                 params.setSearchMethod(search)
                 params.setMutateDistance(distance)
                 params.setCumulativeDistance(cum)
+
                 params.generateAdjMatrix()
     
                 utils.logInitialConditions(logger, params, landscapes)
     
                 simulation = model.NK(params)
+                header = ["Fields", "Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
+                header += ["Landscape", "NumberOfLandscapes", "AttemptedFlips", "AcceptedFlips", "WasFlipAccepted"]
+                header += ["CurrentConfiguration", "CurrentSystemFitness", "ConsideredConfiguration"]
+                for i in range(0, nVal):
+                    header.append("w" + str(i))
+                header.append("ConsideredSystemFitness")
+                
+                transactionCSVFile = open(settings.TRANSACTION_CSV_FILE, 'a')
+                transWriter = csv.writer(transactionCSVFile)
+                transWriter.writerow(header)
+                fitnessDistribution = []
+                attemptedFlipsDist = []
+                acceptedFlipsDist = []
+                output = sim.SimOutput()
+
                 key = int(round(time.time() * 1000))
-                output = simulation.runSimulation(key, landscapes)
-    
+                for iteration in range(0, landscapes):
+                    [f, at, ac] = simulation.run(key, iteration, transWriter)
+                    fitnessDistribution.append(f)
+                    attemptedFlipsDist.append(at)
+                    acceptedFlipsDist.append(ac)
+                
+                output.setLandscapes(landscapes)
+                output.setFinessDistribution(fitnessDistribution)
+                output.setAttemptedFlipsDistribution(attemptedFlipsDist)
+                output.setAcceptedFlipsDistribution(acceptedFlipsDist)
                 utils.logResults(logger, params, output, landscapes)
-    
+                transactionCSVFile.close()
+                
                 nextRow = []
                 nextRow.append(params.nValue())
                 nextRow.append(params.kValue())
