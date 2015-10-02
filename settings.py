@@ -15,5 +15,5 @@ RESULTS_CSV_FILE = 'results.csv'
 kList = [0, 2, 4, 8, 16]
 #nList = [8, 16, 24, 48, 96]
 nList = [16]
-landscapes = 100
+landscapes = 500
 #stageAttemptedFlipsInterval = 100

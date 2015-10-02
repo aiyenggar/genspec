@@ -111,12 +111,36 @@ for nVal in settings.nList:
                     savedFitnessDict = simulation.fitnessDict()
                     transactionCSVFile.close()
                     configIndex += 1
-            
+                            
+            output = []    
             plt.figure(figsize=(12,24))            
             ax = plt.subplot(len(settings.kList) * len(settings.nList), 1, plotId)
 
             """ Calculate the time periodwise average system fitness """
             for configIndex in range(0, len(runConfigs)): 
+                tempo = sim.SimOutput()
+                tempo.setLandscapes(landscapes)
+                tempo.setFinessDistribution(fitnessDistribution[configIndex])
+                tempo.setAttemptedFlipsDistribution(attemptedFlipsDist[configIndex])
+                tempo.setAcceptedFlipsDistribution(acceptedFlipsDist[configIndex])
+                output.append(tempo)
+                utils.logResults(logger, params[configIndex], tempo, landscapes)
+            
+                nextRow = []
+                nextRow.append(params[configIndex].nValue())
+                nextRow.append(params[configIndex].kValue())
+                nextRow.append(output[configIndex].meanFitness())
+                nextRow.append(params[configIndex].searchMethodString())
+                nextRow.append(params[configIndex].mutateDistance())
+                nextRow.append(params[configIndex].cumulativeDistance())
+                nextRow.append(output[configIndex].landscapes())
+                nextRow.append(output[configIndex].stddevFitness())
+                nextRow.append(output[configIndex].meanAttemptedFlips())
+                nextRow.append(output[configIndex].meanAcceptedFlips())
+                resWriter.writerow(nextRow)
+                resFile.flush()
+                results.append([params[configIndex], output[configIndex]])                
+                
                 tickDict = tickLog[configIndex]
                 maxLen = 0
                 for nextKey in tickDict:
@@ -147,42 +171,15 @@ for nVal in settings.nList:
                 addOn = [periodFitnessDist[configIndex][existingLen-1]] * shortage
                 periodFitnessDist[configIndex] += addOn
                 ax.plot(range(1, len(periodFitnessDist[configIndex])+1), 
-                                          periodFitnessDist[configIndex], 
-                                          color=colors[configIndex],
-                                          label=params[configIndex].searchMethodString() + " " + str(params[configIndex].mutateDistance()),
-                                          lw=linewidth[configIndex],
-                                          ls=linestyle[configIndex]
-                                            )
+                              periodFitnessDist[configIndex], color=colors[configIndex],
+                              label=params[configIndex].searchMethodString() + " " + str(params[configIndex].mutateDistance()) + " (" + str(round(output[configIndex].meanFitness(),2)) +")",
+                              lw=linewidth[configIndex], ls=linestyle[configIndex]
+                        )
                 ax.legend(fancybox=True, shadow=True, ncol=1, loc='best')
                 plt.title("N = " + str(nVal) + " K = " + str(kVal) + " Landscapes = " + str(landscapes))
 
             plotId += 1
             plt.show()
-                
-            output = []               
-            for configIndex in range(0, len(runConfigs)):                     
-                tempo = sim.SimOutput()
-                tempo.setLandscapes(landscapes)
-                tempo.setFinessDistribution(fitnessDistribution[configIndex])
-                tempo.setAttemptedFlipsDistribution(attemptedFlipsDist[configIndex])
-                tempo.setAcceptedFlipsDistribution(acceptedFlipsDist[configIndex])
-                output.append(tempo)
-                utils.logResults(logger, params[configIndex], tempo, landscapes)
-            
-                nextRow = []
-                nextRow.append(params[configIndex].nValue())
-                nextRow.append(params[configIndex].kValue())
-                nextRow.append(output[configIndex].meanFitness())
-                nextRow.append(params[configIndex].searchMethodString())
-                nextRow.append(params[configIndex].mutateDistance())
-                nextRow.append(params[configIndex].cumulativeDistance())
-                nextRow.append(output[configIndex].landscapes())
-                nextRow.append(output[configIndex].stddevFitness())
-                nextRow.append(output[configIndex].meanAttemptedFlips())
-                nextRow.append(output[configIndex].meanAcceptedFlips())
-                resWriter.writerow(nextRow)
-                resFile.flush()
-                results.append([params[configIndex], output[configIndex]])
             utils.logLine(logger)
 
 resFile.close()
