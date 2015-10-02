@@ -24,23 +24,22 @@ class NK:
         if simInput.isUserDefinedStartConfig():
             [self.__nodeConfig, self.__fitnessDict] = simInput.startConfig()
         else:
-            self.__nodeConfig = None
-            self.__fitnessDict = None
-        self.logger =  logging.getLogger(__name__)
-
-    def setup(self):
-        self.__randContext = dict({})
-        self.__attemptedFlips = 0
-        self.__acceptedFlips = 0
-        if self.__inputs.isUserDefinedStartConfig():
-            pass
-        else:
             self.__nodeConfig = list([])
             self.__fitnessDict = dict({})
             for index in range(0, self.__inputs.nValue()):
                 nextNodeValue = sim.getRandomInt(0, self.__inputs.aValue()-1)
                 self.__nodeConfig.append(nextNodeValue)
                 self.__fitnessDict[index] = dict({})
+        self.logger =  logging.getLogger(__name__)
+
+    def setup(self):
+        self.__randContext = dict({})
+        self.__attemptedFlips = 0
+        self.__attLog = []
+        self.__acceptedFlips = 0
+        self.__accLog = []
+#        self.__selectedConfig = None
+#        self.__selectedFitness = 0
 
     def getMaskedConfig(self, nodeIndex, configuration):
         """
@@ -190,6 +189,18 @@ class NK:
         else:
             return None
 
+    def nodeSelected(self):
+        return list(self.__selectedConfig)
+    
+    def fitnessSelected(self):
+        return self.__selectedFitness
+        
+    def attLog(self):
+        return tuple(self.__attLog)
+        
+    def accLog(self):
+        return tuple(self.__accLog)
+        
     def logState(self, configuration, fitness, leadingString=""):
         pString = leadingString + listString(configuration) + " | "
         pString += self.nodeContriString(configuration) + " | "
@@ -250,7 +261,9 @@ class NK:
         else:
             return False
             
-    def searchNext(self, nodeConfig, nodeFitness, transWriter, keyVal, iteration):
+    def searchNext(self, transWriter, keyVal, iteration):
+        nodeConfig = self.__nodeConfig
+        nodeFitness = self.getFitness(self.__nodeConfig)
         searchExhausted = False
         transStats = self.getDefaultStatsList(keyVal, iteration)
         selectedConfig = nodeConfig
@@ -266,9 +279,12 @@ class NK:
                 
                 if (systemFitness > selectedFitness):
                     flag = 1
-                    self.__acceptedFlips += 1 #Not sure if this should be here
+                    self.__acceptedFlips += 1
+                    self.__accLog.append(systemFitness)
+                    self.__attLog.append(systemFitness)
                 else:
                     flag = 0
+                    self.__attLog.append(selectedFitness)
                 transStats = self.updateStatsListFlips(transStats, self.__attemptedFlips,
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
@@ -282,7 +298,10 @@ class NK:
                     break
             if (selectedConfig == nodeConfig):
                 searchExhausted = True
-            return [selectedConfig, selectedFitness, searchExhausted]
+            self.__nodeConfig = selectedConfig
+            self.__selectedConfig = selectedConfig
+            self.__selectedFitness = selectedFitness
+            return searchExhausted
         elif (self.__inputs.searchMethod() == sim.SearchMethod.GREEDY):          
             exploredNeighbours = {}
             maxNeighbours = self.getMaxNeighbours()
@@ -306,8 +325,11 @@ class NK:
                 if (systemFitness > selectedFitness):
                     flag = 1
                     self.__acceptedFlips += 1
+                    self.__accLog.append(systemFitness)
+                    self.__attLog.append(systemFitness)
                 else:
                     flag = 0
+                    self.__attLog.append(selectedFitness)
                 transStats = self.updateStatsListFlips(transStats, self.__attemptedFlips,
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
@@ -316,7 +338,7 @@ class NK:
                 if flag == 1:
                     selectedConfig = list(randomConfig)
                     selectedFitness = systemFitness
-                    return [selectedConfig, selectedFitness, searchExhausted]
+                    break
                 if (self.outOfOxygen()):
                     searchExhausted = True
                     break
@@ -324,7 +346,10 @@ class NK:
                 we have reached a local maximum and there is no point searching anymore """
             if (selectedConfig == nodeConfig):
                 searchExhausted = True
-            return [selectedConfig, selectedFitness, searchExhausted]
+            self.__nodeConfig = selectedConfig
+            self.__selectedConfig = selectedConfig
+            self.__selectedFitness = selectedFitness
+            return searchExhausted
         elif (self.__inputs.searchMethod() == sim.SearchMethod.RANDOMTHENSTEEPEST):
             """ Assumed that the first jump is random and 
                 the rest of self.__inputs.mutateDistance() is STEEPEST """
@@ -347,13 +372,17 @@ class NK:
                 self.__attemptedFlips += 1
                 self.refreshFitnessContributions(adjConfig, baseConfig)
                 adjFitness = self.getFitness(adjConfig)
+
                 self.logState(adjConfig, adjFitness, "\t")
                 
                 if (adjFitness > selectedFitness):
                     flag = 1
                     self.__acceptedFlips += 1
+                    self.__accLog.append(adjFitness)
+                    self.__attLog.append(adjFitness)
                 else:
                     flag = 0
+                    self.__attLog.append(selectedFitness)
                 transStats = self.updateStatsListFlips(transStats, self.__attemptedFlips,
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
@@ -367,9 +396,14 @@ class NK:
                     break
             if (len(self.__randContext[keyEntry]) == maxRandomNeighbours):
                 searchExhausted = True
-            return [selectedConfig, selectedFitness, searchExhausted]
+            self.__nodeConfig = selectedConfig
+            self.__selectedConfig = selectedConfig
+            self.__selectedFitness = selectedFitness
+            return searchExhausted            
         else:
-            return None
+            self.__selectedConfig = selectedConfig
+            self.__selectedFitness = selectedFitness
+            return searchExhausted  
 
 
     def run(self, keyVal, outerIterations, transWriter):
@@ -377,17 +411,16 @@ class NK:
         self.setup()
         self.refreshFitnessContributions(self.__nodeConfig)
         systemFitness = self.getFitness(self.__nodeConfig)
+        self.__attemptedFlips += 1
+        self.__attLog.append(systemFitness)
+        self.__acceptedFlips += 1
+        self.__accLog.append(systemFitness)
         self.logState(self.__nodeConfig, systemFitness)
-        while 1:
-            [mutatedConfig, mutatedFitness, terminate] = self.searchNext(self.__nodeConfig,
-                                                systemFitness, transWriter,
+        terminate = False
+        while not terminate:
+            terminate = self.searchNext(transWriter,
                                                 keyVal, outerIterations)
-            self.logState(mutatedConfig, mutatedFitness)
-            if (terminate == True):
-                break
-            self.__nodeConfig = list(mutatedConfig)
-            systemFitness = mutatedFitness
-        
-        return [systemFitness, self.__attemptedFlips, self.__acceptedFlips]
+     
+        return [self.fitnessSelected(), self.__attemptedFlips, self.__acceptedFlips]
 
 """ End of Class NK """

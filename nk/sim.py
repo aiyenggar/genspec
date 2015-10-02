@@ -54,9 +54,18 @@ class SimInput:
     def __del__(self):
         pass
 
+    def setAdjMatrix(self, givenMatrix):
+        self.__adjMatrix = givenMatrix
+        
     def setCeilingAttemptedFlips(self, maxAttemptedFlips):
         self.__ceilingAttemptedFlips = maxAttemptedFlips
         return self.__ceilingAttemptedFlips
+        
+    def clearStartConfig(self):
+        self.__startConfigGiven = False
+        self.__startNodeConfig = None
+        self.__startFitnessDict = None
+        pass
     
     def setStartConfig(self, startNodeConfig, startFitnessDict):
         self.__startConfigGiven = True
