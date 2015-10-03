@@ -10,7 +10,7 @@ import settings
 import time
 import csv
 import random
-import numpy
+import datetime
 import matplotlib.pyplot as plt
 from nk import sim, model
 
@@ -32,7 +32,9 @@ def getDictFitness(fitList, dictIndex):
             
 random.seed(utils.getDefaultSeedObject())
 utils.setupLogging();
-
+colors = "bkmrg"
+linestyle = ["-", "-.", "--", "--", "-"]
+linewidth = [2, 3, 2, 3, 2]
 results = []
 resFile = open(settings.RESULTS_CSV_FILE, 'a')
 resWriter = csv.writer(resFile)
@@ -54,6 +56,9 @@ for nVal in settings.nList:
             periodFitnessDist = []
             tickLog = []
             params = []
+            maxTimePeriod = 0
+            transWriter = None
+            transactionCSVFile = None
             while len(params) <= len(runConfigs):
                 params.append(None)
                 fitnessDistribution.append([])
@@ -87,33 +92,43 @@ for nVal in settings.nList:
                     utils.logInitialConditions(logger, params[configIndex], landscapes)
         
                     simulation = model.NK(params[configIndex])
+                    """ Save the nodeConfig for use in following iteration """
                     savedNodeConfig = simulation.nodeConfig()
-                    header = ["Fields", "Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
-                    header += ["Landscape", "NumberOfLandscapes", "AttemptedFlips", "AcceptedFlips", "WasFlipAccepted"]
-                    header += ["CurrentConfiguration", "CurrentSystemFitness", "ConsideredConfiguration"]
-                    for i in range(0, nVal):
-                        header.append("w" + str(i))
-                    header.append("ConsideredSystemFitness")
+#                    header = ["Fields", "Key", "N", "K", "A", "SearchMethod", "Distance", "CumulativeDistance"]
+#                    header += ["Landscape", "NumberOfLandscapes", "AttemptedFlips", "AcceptedFlips", "WasFlipAccepted"]
+#                    header += ["CurrentConfiguration", "CurrentSystemFitness", "ConsideredConfiguration"]
+#                    for i in range(0, nVal):
+#                        header.append("w" + str(i))
+#                    header.append("ConsideredSystemFitness")
  
                     key = int(round(time.time() * 1000))
                     
-                    transactionCSVFile = open("log/" + str(iteration) + str(configIndex) + ".csv", 'w')
-                    transWriter = csv.writer(transactionCSVFile)
-                    transWriter.writerow(header)
+#                    transactionCSVFile = open("log/" + str(iteration) + str(configIndex) + ".csv", 'w')
+#                    transWriter = csv.writer(transactionCSVFile)
+#                    transWriter.writerow(header)
    
                     [f, at, ac] = simulation.run(key, iteration, transWriter)
                     fitnessDistribution[configIndex].append(f)
                     attemptedFlipsDist[configIndex].append(at)
                     acceptedFlipsDist[configIndex].append(ac)
                     tickLog[configIndex][iteration] = simulation.attLog()
-                    """ Save the nodeConfig and fitnessDict for use in following iteration """
+                    if len(tickLog[configIndex][iteration]) > maxTimePeriod:
+                        maxTimePeriod = len(tickLog[configIndex][iteration])
+                        
+                    """ Save the fitnessDict for use in following iteration """
                     
                     savedFitnessDict = simulation.fitnessDict()
-                    transactionCSVFile.close()
+                    if transactionCSVFile != None:
+                        transactionCSVFile.close()
                     configIndex += 1
-                            
+            
+            if maxTimePeriod > 800:
+                div100 = int(maxTimePeriod * 3/400) 
+                maxTimePeriod = int(div100 * 100)
             output = []    
-            plt.figure(figsize=(12,24))            
+            plt.figure(figsize=(15,24))    
+            plt.xlabel("Time Period")
+            plt.ylabel("Fitness")
             ax = plt.subplot(len(settings.kList) * len(settings.nList), 1, plotId)
 
             """ Calculate the time periodwise average system fitness """
@@ -159,24 +174,26 @@ for nVal in settings.nList:
                     # landscapes should be the same as len(tickDict)
                     periodFitnessDist[configIndex].append(avgFitness)
                     dictIndex += 1
-                colors = "bkmrg"
-                linestyle = ["-", "-.", "--", "--", "-"]
-                linewidth = [2, 3, 2, 3, 2]
-                plt.xlabel("Time Period")
-                plt.ylabel("Fitness")
-                maxLen = 899
-                periodFitnessDist[configIndex] = periodFitnessDist[configIndex][0:maxLen]
+                
+                fileString = "N" + str(nVal) + "-K" + str(realK) + "-L" + str(landscapes) + "-D" + str(params[configIndex].mutateDistance()) + "-" + params[configIndex].searchMethodString() + "-" + datetime.datetime.strftime(datetime.datetime.now(), '%Y%m%d%H%M%S') + ".csv"
+                tickFile = open("log/" + fileString, 'w')
+                tickWriter = csv.writer(tickFile)
+                tickWriter.writerow(periodFitnessDist[configIndex])
+                tickFile.close()
                 existingLen = len(periodFitnessDist[configIndex])
-                shortage = maxLen + 1 - existingLen
-                addOn = [periodFitnessDist[configIndex][existingLen-1]] * shortage
-                periodFitnessDist[configIndex] += addOn
+                shortage = maxTimePeriod - existingLen
+                if shortage > 0:
+                    addOn = [periodFitnessDist[configIndex][existingLen-1]] * shortage
+                    periodFitnessDist[configIndex] += addOn
+                periodFitnessDist[configIndex] = periodFitnessDist[configIndex][0:maxTimePeriod]
+
                 ax.plot(range(1, len(periodFitnessDist[configIndex])+1), 
                               periodFitnessDist[configIndex], color=colors[configIndex],
-                              label=params[configIndex].searchMethodString() + " " + str(params[configIndex].mutateDistance()) + " (" + str(round(output[configIndex].meanFitness(),2)) +")",
+                              label=str(params[configIndex].mutateDistance()) + " " + params[configIndex].searchMethodString() + " (" + str(round(output[configIndex].meanFitness(),2)) +")",
                               lw=linewidth[configIndex], ls=linestyle[configIndex]
                         )
-                ax.legend(fancybox=True, shadow=True, ncol=1, loc='best')
-                plt.title("N = " + str(nVal) + " K = " + str(kVal) + " Landscapes = " + str(landscapes))
+                ax.legend(fancybox=True, shadow=True, ncol=1, loc='lower right')
+                plt.title("N = " + str(nVal) + " K = " + str(realK) + " Landscapes = " + str(landscapes))
 
             plotId += 1
             plt.show()

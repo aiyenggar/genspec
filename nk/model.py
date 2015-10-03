@@ -289,7 +289,8 @@ class NK:
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
                 transStats = self.updateStatsListConsidered(transStats, adjConfig, systemFitness)
-                transWriter.writerow(transStats)
+                if transWriter != None:
+                    transWriter.writerow(transStats)
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = systemFitness
@@ -334,7 +335,8 @@ class NK:
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
                 transStats = self.updateStatsListConsidered(transStats, randomConfig, systemFitness)
-                transWriter.writerow(transStats)       
+                if transWriter != None:
+                    transWriter.writerow(transStats)       
                 if flag == 1:
                     selectedConfig = list(randomConfig)
                     selectedFitness = systemFitness
@@ -387,7 +389,8 @@ class NK:
                                           self.__acceptedFlips, flag)
                 transStats = self.updateStatsListCurrent(transStats, selectedConfig, selectedFitness)
                 transStats = self.updateStatsListConsidered(transStats, adjConfig, adjFitness)
-                transWriter.writerow(transStats)
+                if transWriter != None:
+                    transWriter.writerow(transStats)
                 if (flag == 1):
                     selectedConfig = list(adjConfig)
                     selectedFitness = adjFitness
