@@ -50,6 +50,8 @@ class SimInput:
         self.__searchMethod = SearchMethod.GREEDY
         self.__mutateDistance = 1
         self.__cumulativeDistance = True
+        self.__nBar = n
+
 
     def __del__(self):
         pass
@@ -85,6 +87,9 @@ class SimInput:
         else:
             self.logger.error("Invalid distance parameter to setMutateDistance: " + str(distance))
 
+    def setNBar(self, nBar):
+        self.__nBar = nBar
+    
     def setCumulativeDistance(self, boolVal):
         self.__cumulativeDistance = boolVal
      
@@ -106,6 +111,9 @@ class SimInput:
     def adjMatrix(self):
         return self.__adjMatrix
 
+    def nBar(self):
+        return self.__nBar
+        
     def searchMethod(self):
         return self.__searchMethod
 

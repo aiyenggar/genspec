@@ -38,6 +38,14 @@ class NK:
         self.__attLog = []
         self.__acceptedFlips = 0
         self.__accLog = []
+        self.__visibleNodes = {}
+        self.__opaqueNodes = {}
+        for index in range(0, self.__inputs.nBar()):
+            nextVisibleNode = sim.getRandomInt(0, self.__inputs.nValue() - 1, self.__visibleNodes)
+            self.__visibleNodes[nextVisibleNode] = 1
+        for index in range(0, self.__inputs.nValue()):
+            if index not in self.__visibleNodes:
+                self.__opaqueNodes[index] = 1
 #        self.__selectedConfig = None
 #        self.__selectedFitness = 0
 
@@ -116,6 +124,7 @@ class NK:
         When cumulative is False a configuration at exactly distance is generated
         """
         nodesMutated = {}
+        nodesMutated.update(self.__opaqueNodes)
         current = configuration
         if cumulative == True:
             generatedDistance = sim.getRandomInt(1, distance)
@@ -155,8 +164,7 @@ class NK:
         hamming distance from the given configuration
         """
         listNeighbours = []
-        nextNode = 0
-        while (nextNode < self.__inputs.nValue()):
+        for nextNode in self.__visibleNodes:
             nextAllele = 0
             while (nextAllele < self.__inputs.aValue()):
                 if (nextAllele != configuration[nextNode]):
@@ -214,7 +222,7 @@ class NK:
         else:
             startDistance = self.__inputs.mutateDistance() - 1
         for distance in range(startDistance, self.__inputs.mutateDistance()):
-            combinations = scipy.misc.comb(self.__inputs.nValue(), distance+1)
+            combinations = scipy.misc.comb(self.__inputs.nBar(), distance+1)
             variations = math.pow(self.__inputs.aValue()-1, distance+1)
             maxNeighbours += combinations * variations
         return maxNeighbours
@@ -357,7 +365,7 @@ class NK:
                 the rest of self.__inputs.mutateDistance() is STEEPEST """
             baseConfig = self.getJumpNeighbour(nodeConfig, 1, False)
             """ Since only the first mutation is assumed random """
-            maxRandomNeighbours = self.__inputs.nValue() * (self.__inputs.aValue() - 1)
+            maxRandomNeighbours = self.__inputs.nBar() * (self.__inputs.aValue() - 1)
             keyEntry = tuple(nodeConfig)
             valueEntry = tuple(baseConfig)
             if keyEntry not in self.__randContext:
@@ -425,5 +433,6 @@ class NK:
                                                 keyVal, outerIterations)
      
         return [self.fitnessSelected(), self.__attemptedFlips, self.__acceptedFlips]
+
 
 """ End of Class NK """

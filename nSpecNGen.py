@@ -15,11 +15,8 @@ import matplotlib.pyplot as plt
 from nk import sim, model
 
 runConfigs = [  
-                [sim.SearchMethod.GREEDY, 2, True],
-                [sim.SearchMethod.STEEPEST, 2, True],
-                [sim.SearchMethod.RANDOMTHENSTEEPEST, 2, True],
-                [sim.SearchMethod.GREEDY, 1, True],
-                [sim.SearchMethod.STEEPEST, 1, True],
+                [sim.SearchMethod.STEEPEST, 2, True, 5],
+                [sim.SearchMethod.STEEPEST, 1, True, 15]
             ]
 
 def getDictFitness(fitList, dictIndex):
@@ -66,21 +63,25 @@ for nVal in settings.nList:
                 acceptedFlipsDist.append([])
                 periodFitnessDist.append([])
                 tickLog.append({})
-            for iteration in range(0, landscapes):
-                """ Force a new Landscape creation """
                 savedNodeConfig = None
                 savedFitnessDict = None
+            for iteration in range(0, landscapes):
+                """ Force a new Landscape creation """
+                if (iteration%landscapes == 0):
+                    savedNodeConfig = None
+                    savedFitnessDict = None
                 configIndex = 0
                 dummy = sim.SimInput(nVal, realK)
                 dummy.generateAdjMatrix()
                 iterationAdjMatrix = dummy.adjMatrix()
                 dummy = None
-                for [search, distance, cum] in runConfigs:
+                for [search, distance, cum, nBar] in runConfigs:
                     if (params[configIndex] == None):
                         params[configIndex] = sim.SimInput(nVal, realK)
                         params[configIndex].setSearchMethod(search)
                         params[configIndex].setMutateDistance(distance)
                         params[configIndex].setCumulativeDistance(cum)
+                        params[configIndex].setNBar(nBar)
                         
                     params[configIndex].setAdjMatrix(iterationAdjMatrix)
                     
@@ -122,7 +123,7 @@ for nVal in settings.nList:
                         transactionCSVFile.close()
                     configIndex += 1
             
-            if maxTimePeriod > 800:
+            if maxTimePeriod > 100:
                 div100 = int(maxTimePeriod * 3/400) 
                 maxTimePeriod = int(div100 * 100)
             output = []    
