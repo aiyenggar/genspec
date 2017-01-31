@@ -4,5 +4,5 @@ log/*
 *.log.*
 results.csv
 *.pyc
-
 output.csv
+.DS_Store
