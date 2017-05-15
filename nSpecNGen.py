@@ -15,8 +15,7 @@ import matplotlib.pyplot as plt
 from nk import sim, model
 
 runConfigs = [  
-                [sim.SearchMethod.STEEPEST, 2, True, 5],
-                [sim.SearchMethod.STEEPEST, 1, True, 15]
+                [sim.SearchMethod.STEEPEST, 1, True, 16]
             ]
 
 def getDictFitness(fitList, dictIndex):
